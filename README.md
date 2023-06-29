@@ -1,4 +1,4 @@
-# this repo is now maintenance only; please develop a fork || use the mrq repo if you have large features to submit
+# Fastest Tortoise Inference
 
 ### recent updates
 
@@ -13,12 +13,13 @@
 
 ---
 
-# Speeding up TorToiSe inference 5x
+# Speeding up TorToiSe inference 10x
 
 This is a working project to drastically boost the performance of TorToiSe, without modifying the base models. **Expect speedups of _5~10x_**, and hopefully 20x or larger when this project is complete.
 
 This repo adds the following config options for TorToiSe for faster inference:
 
+- [x] added deepspeed inference in autoregrassive model https://github.com/microsoft/DeepSpeed
 - [x] (`--kv_cache`) enabling of [KV cache](https://kipp.ly/blog/transformer-inference-arithmetic/#kv-cache) for MUCH faster GPT sampling
 - [x] (`--half`) half precision inference where possible
 - [x] (`--sampler dpm++2m`) [DPM-Solver](https://github.com/LuChengTHU/dpm-solver) samplers for better diffusion
@@ -30,50 +31,20 @@ All changes in this fork are licensed under the **AGPL**. For avoidance beyond a
 
 ## Current results
 
-All results listed were generated with a slightly undervolted RTX 3090 on Ubuntu 22.04, with the following base command:
+All results listed were generated with a RTX 1660 - 6 GB on Ubuntu 22.04:
 
-```sh
-./script/tortoise-tts.py --voice emma --seed 42 --text "$TEXT"
-```
+I Just ran a Jupyter Notebook because i am lazy.. for more becnhmarking try it your self.
 
-### **NOTE**: samples here are somewhat old; they don't have `voicefixer` applied.
+### With Original tortoise-tts
+![with-tortoise-tts](https://github.com/manmay-nakhashi/tortoise-tts-fastest/assets/17176700/1ed69918-def4-4500-9ff4-1c75477ae37a)
 
-Original TorToiSe [repo](https://github.com/neonbjb/tortoise-tts):
-| speed (B) | speed (A) | preset | sample |
-|-|-|-|-|
-| 112.81s | 14.94s | ultra_fast | [here](optimized_examples/A/tortoise_original-with_original_vram/) |
+### With tortoise-tts-fast fork
+![with-tortoise-fast-fork](https://github.com/manmay-nakhashi/tortoise-tts-fastest/assets/17176700/5bebebd4-e176-4101-ae60-301ea66f2be6)
 
-New [repo](https://github.com/152334H/tortoise-tts), with `--preset ultra_fast`:
-| speed (B) | speed (A) | GPT kv-cache | sampler | steps | cond-free diffusion | autocast to fp16 | samples (vs orig repo) |
-|-|-|-|-|-|-|-|-|
-| 118.61 | 11.20 | ❌ | DDIM | 30 | ❌ | ❌ | [identical](optimized_examples/A/tortoise_original/) |
-| 9.98 | 4.17 | ✅ | DDIM | 30 | ❌ | ❌ | [identical](optimized_examples/A/tortoise_original-kv_cache/) |
-| 14.32 | 5.58 | ✅ | DPM++2M | 30 | ✅ | ❌ | [**best**](optimized_examples/A/very_fast-ar16/) |
-| 7.51 | 3.26 | ✅ | DDIM | 10 | ✅ | ❌ | [~identical](optimized_examples/A/ultra_fast-kv_cache/) |
-| 7.12 | 3.30 | ✅ | DDIM | 10 | ✅ | ✅ | [okayish](optimized_examples/A/ultra_fast-kv_cache-half/) |
-| 7.21 | 3.27 | ✅ | DDIM | 10 | ❌ | ✅ | [bad](optimized_examples/A/ultra_fast-kv_cache-half-no_cond_tree/) |
+### With this fork
+![with-tortoise-fastest](https://github.com/manmay-nakhashi/tortoise-tts-fastest/assets/17176700/9071d287-533d-4358-b4b8-3e6eea8574a7)
 
-Results measure the time taken to run **`tts.tts_with_preset(...)`** using the CLI.
 
-The example texts used were:
-
-A (70 characters)
-
-> I'm looking for contributors who can do optimizations better than me.
-
-B (188 characters)
-
-> Then took the other, as just as fair,
->
-> And having perhaps the better claim,
->
-> Because it was grassy and wanted wear;
->
-> Though as for that the passing there
->
-> Had worn them really about the same,
-
-Half precision currently significantly worsens outputs, so I do not recommend enabling it unless you are happy with the samples linked. Using `cond_free` with half precision seems to produce decent outputs.
 
 ## Installation
 
