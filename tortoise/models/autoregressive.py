@@ -9,7 +9,7 @@ from transformers.modeling_outputs import CausalLMOutputWithCrossAttentions
 
 from tortoise.models.arch_util import AttentionBlock
 from tortoise.utils.typical_sampling import TypicalLogitsWarper
-
+import deepspeed
 
 def null_position_embeddings(range, dim):
     return torch.zeros((range.shape[0], range.shape[1], dim), device=range.device)
@@ -400,6 +400,11 @@ class UnifiedVoice(nn.Module):
             self.mel_head,
             kv_cache=kv_cache,
         )
+        self.ds_engine = deepspeed.init_inference(model=self.inference_model,  
+                                                  mp_size=1,
+                                                  replace_with_kernel_inject=True,
+                                                  dtype=torch.half)
+        self.ds_engine.module.eval()
         # self.inference_model = PrunedGPT2InferenceModel(gpt_config, self.gpt, self.mel_pos_embedding, self.mel_embedding, self.final_norm, self.mel_head)
         self.gpt.wte = self.mel_embedding
 
@@ -644,7 +649,7 @@ class UnifiedVoice(nn.Module):
             if max_generate_length is None
             else trunc_index + max_generate_length
         )
-        gen = self.inference_model.generate(
+        gen = self.ds_engine.module.generate(
             inputs,
             bos_token_id=self.start_mel_token,
             pad_token_id=self.stop_mel_token,

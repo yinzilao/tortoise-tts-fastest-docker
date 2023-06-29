@@ -739,7 +739,11 @@ class TextToSpeech:
             # The diffusion model actually wants the last hidden layer from the autoregressive model as conditioning
             # inputs. Re-produce those for the top results. This could be made more efficient by storing all of these
             # results, but will increase memory usage.
-            with self.temporary_cuda(self.autoregressive) as autoregressive:
+            with self.temporary_cuda(
+                self.autoregressive
+            ) as autoregressive, torch.autocast(
+                device_type="cuda", dtype=torch.float16, enabled=half
+            ):
                 best_latents = autoregressive(
                     auto_conditioning.repeat(k, 1),
                     text_tokens.repeat(k, 1),
