@@ -102,13 +102,13 @@ def run_and_save_tts(
     #
     if not isinstance(gen, list):
         gen = [gen]
-    gen = [g.squeeze(0).cpu() for g in gen]
+    audio_ = [g.squeeze(0).cpu() for g in gen]
     fps = []
-    for i, g in enumerate(gen):
+    for i, g in enumerate(audio_):
         fps.append(output_dir / f"{i}.wav")
         save_gen_with_voicefix(g, fps[-1], squeeze=False, voicefixer=voicefixer)
         # torchaudio.save(output_dir/f'{i}.wav', g, 24000)
-    return fps if return_filepaths else gen
+    return fps if return_filepaths else audio_
 
 
 def infer_on_texts(
