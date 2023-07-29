@@ -20,7 +20,7 @@ from tqdm import tqdm
 from tortoise.dpm_solver_pytorch import DPM_Solver, NoiseScheduleVP, model_wrapper
 
 K_DIFFUSION_SAMPLERS = {"k_euler_a": sample_euler_ancestral, "dpm++2m": sample_dpmpp_2m}
-SAMPLERS = ["dpm++2m", "p", "ddim"]
+SAMPLERS = ["dpm++2m", "p", "ddim", "plms"]
 
 
 def normal_kl(mean1, logvar1, mean2, logvar2):
