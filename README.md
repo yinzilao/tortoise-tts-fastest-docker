@@ -18,7 +18,7 @@
 This is a working project to drastically boost the performance of TorToiSe, without modifying the base models. **Expect speedups of _5~10x_**, and hopefully 20x or larger when this project is complete.
 
 This repo adds the following config options for TorToiSe for faster inference:
-
+- [x] (`--sampler plms`) plms sampler from stable diffusion, generate more high frequency content then ddim 
 - [x] added deepspeed inference in autoregrassive model https://github.com/microsoft/DeepSpeed
 - [x] (`--kv_cache`) enabling of [KV cache](https://kipp.ly/blog/transformer-inference-arithmetic/#kv-cache) for MUCH faster GPT sampling
 - [x] (`--half`) half precision inference where possible
