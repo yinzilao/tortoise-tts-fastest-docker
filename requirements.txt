@@ -4,7 +4,7 @@ appdirs
 attrs
 audioread
 auraloss
-backports-zoneinfo
+#backports-zoneinfo
 beautifulsoup4
 bigvgan @ git+https://github.com/152334H/BigVGAN.git
 blinker
