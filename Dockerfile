@@ -6,20 +6,39 @@
 
 # Want to help us make this template better? Share your feedback here: https://forms.gle/ybq9Krt8jtBL3iCk7
 
-ARG PYTHON_VERSION=3.10
-FROM python:${PYTHON_VERSION}-slim as base
-
-# Prevents Python from writing pyc files.
-ENV PYTHONDONTWRITEBYTECODE=1
-
-# Keeps Python from buffering stdout and stderr to avoid situations where
-# the application crashes without emitting any logs due to buffering.
-ENV PYTHONUNBUFFERED=1
+# Build stage
+FROM pytorch/pytorch:2.0.1-cuda11.7-cudnn8-runtime AS builder
 
 WORKDIR /app
 
-# Create a non-privileged user that the app will run under.
-# See https://docs.docker.com/go/dockerfile-user-best-practices/
+# Copy only the requirements file first to leverage Docker cache
+COPY requirements.txt /app/
+
+# Install build dependencies and Python packages
+RUN apt-get update && apt-get install -y \
+    git \
+    wget \
+    && rm -rf /var/lib/apt/lists/* \
+    && pip3 install --no-cache-dir --upgrade pip \
+    && pip3 install --no-cache-dir torch torchvision torchaudio --extra-index-url https://download.pytorch.org/whl/cu117 \
+    && pip3 install --no-cache-dir -r requirements.txt \
+    && pip3 install --no-cache-dir git+https://github.com/152334H/BigVGAN.git \
+    && pip3 install --no-cache-dir streamlit
+
+# Final stage
+FROM pytorch/pytorch:2.0.1-cuda11.7-cudnn8-runtime
+
+WORKDIR /app
+
+# Copy the current directory contents into the container at /app
+COPY . /app
+
+# Set environment variables
+ENV PYTHONUNBUFFERED=1
+ENV STREAMLIT_SERVER_PORT=8501
+ENV STREAMLIT_SERVER_ADDRESS=0.0.0.0
+
+# Create a non-privileged user
 ARG UID=10001
 RUN adduser \
     --disabled-password \
@@ -30,22 +49,22 @@ RUN adduser \
     --uid "${UID}" \
     appuser
 
-# Download dependencies as a separate step to take advantage of Docker's caching.
-# Leverage a cache mount to /root/.cache/pip to speed up subsequent builds.
-# Leverage a bind mount to requirements.txt to avoid having to copy them into
-# into this layer.
-RUN --mount=type=cache,target=/root/.cache/pip \
-    --mount=type=bind,source=requirements.txt,target=requirements.txt \
-    python -m pip install -r requirements.txt
+# Set proper permissions
+RUN chown -R appuser:appuser /app
 
-# Switch to the non-privileged user to run the application.
+# Switch to the non-privileged user
 USER appuser
 
-# Copy the source code into the container.
-COPY . .
-
-# Expose the port that the application listens on.
+# Expose the port Streamlit is running on
 EXPOSE 8501
 
-# Run the application.
-CMD streamlit run script/app.py --server.port=8501 --server.address=0.0.0.0
+# Create an entrypoint script
+RUN echo '#!/bin/sh\n\
+exec streamlit run script/app.py "$@"' > /app/entrypoint.sh \
+    && chmod +x /app/entrypoint.sh
+
+# Set the entrypoint
+ENTRYPOINT ["/app/entrypoint.sh"]
+
+# Default command (can be overridden)
+CMD ["--preset", "ultra_fast"]
