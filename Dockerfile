@@ -14,16 +14,28 @@ WORKDIR /app
 # Install system dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
     git \
+    build-essential \
+    python3-dev \
+    libsndfile1 \
+    cmake \
     && rm -rf /var/lib/apt/lists/*
+
+# Upgrade pip and setuptools
+RUN pip install --upgrade pip setuptools virtualenv
+
+# Create and activate a virtual environment
+RUN python -m venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
 
 # Copy the current directory contents into the container at /app
 COPY . /app
 
 # Install Python dependencies
-RUN pip3 install --no-cache-dir torch torchvision torchaudio --extra-index-url https://download.pytorch.org/whl/cu117 \
-    && pip3 install --no-cache-dir -r requirements.txt \
-    && pip3 install --no-cache-dir git+https://github.com/152334H/BigVGAN.git \
-    && pip3 install --no-cache-dir fastapi uvicorn
+RUN pip3 install --no-cache-dir torch torchvision torchaudio --extra-index-url https://download.pytorch.org/whl/cu118
+RUN pip install --no-cache-dir lit
+RUN pip3 install --no-cache-dir -r requirements.txt
+RUN pip3 install --no-cache-dir git+https://github.com/152334H/BigVGAN.git
+RUN pip3 install --no-cache-dir fastapi uvicorn
 
 # Runtime stage: Create a smaller, optimized image with only the necessary files
 FROM pytorch/pytorch:2.0.1-cuda11.7-cudnn8-runtime
@@ -32,7 +44,12 @@ WORKDIR /app
 
 # Copy only necessary files from builder stage
 COPY --from=builder /app /app
-COPY --from=builder /usr/local/lib/python3.10/site-packages /usr/local/lib/python3.10/site-packages
+
+# Copy all packages from the virtual environment
+COPY --from=builder /opt/venv /opt/venv
+
+# Set up environment to use venv
+ENV PATH="/opt/venv/bin:$PATH"
 
 # Install runtime dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -54,7 +71,7 @@ RUN adduser \
     appuser
 
 # Set proper permissions
-RUN chown -R appuser:appuser /app
+RUN chown -R appuser:appuser /app /opt/venv
 
 # Switch to the non-privileged user
 USER appuser
