@@ -8,11 +8,36 @@
 # database or a cache. For examples, see the Awesome Compose repository:
 # https://github.com/docker/awesome-compose
 services:
-  server:
+  tortoise-tts:
     build:
       context: .
+      dockerfile: Dockerfile
     ports:
-      - 8501:8501
+      - "8000:8000"
+    volumes:
+      - ./models:/app/.models  # Mount the models directory
+      - ./output:/app/output   # Mount the output directory
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+    # Enable file watching for development, excluding heavy directories
+    develop:
+      watch:
+        - action: sync
+          path: ./
+          target: /app
+          ignore:
+            - .git/
+            - models/
+            - output/
+        - action: rebuild
+          path: requirements.txt
 
 # The commented out section below is an example of how to define a PostgreSQL
 # database that your application can use. `depends_on` tells Docker Compose to

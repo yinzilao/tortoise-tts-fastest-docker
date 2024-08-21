@@ -129,6 +129,68 @@ $ streamlit run script/app.py
 
 ![](./static/webui_advanced.png)
 
+# Tortoise-TTS-Fastest Dockerization
+
+This guide will help you set up the `tortoise-tts-fastest` project using Docker, enabling you to deploy and run the model on a cloud platform like RunPod. The Docker setup uses a multi-stage build to optimize the final image size and includes a `docker-compose.yaml` configuration for easy management.
+
+## Prerequisites
+
+- Docker
+- Docker Compose
+- A cloud platform with GPU support (e.g., RunPod)
+
+## Installation
+
+### Clone the Repository
+
+First, clone the `tortoise-tts-fastest` repository:
+
+```shell
+git clone https://github.com/152334H/tortoise-tts-fast
+cd tortoise-tts-fast
+```
+## Build and Run the Docker Container
+Build the Docker image:
+
+```shell
+docker-compose build
+```
+Run the container:
+
+```shell
+docker-compose up
+```
+
+The FastAPI server will start and be accessible at http://localhost:8000.
+
+## API Endpoints
+* POST /tts: Convert text to speech using the specified voice and preset.
+* GET /voices: List all available voices.
+* GET /presets: List all available presets.
+* GET /samplers: List all available samplers.
+##Using the API
+You can use tools like curl or Postman to interact with the API. Here’s an example using curl:
+```shell
+curl -X POST "http://localhost:8000/tts" -H "Content-Type: application/json" -d '{
+  "text": "Hello, world!",
+  "voice": "random",
+  "preset": "fast"
+}'
+```
+## Developing with Docker Compose
+The docker-compose.yaml file is configured to watch for changes in your codebase. If you edit any files, Docker will sync and, if necessary, rebuild the container automatically. This setup is particularly useful when debugging in a cloud environment where you don't have direct access to a GPU.
+
+## Debugging Tips
+* Logging: Use the FastAPI and Uvicorn logs to monitor the API and troubleshoot issues.
+* File Watching: The develop section in docker-compose.yaml helps automatically sync changes. Make sure heavy directories (like models and output) are excluded from syncing to avoid performance issues.
+* GPU Usage: Monitor GPU usage closely, especially in a cloud environment, to avoid unexpected costs.
+## Deployment
+To deploy the container to a cloud environment like RunPod, follow these steps:
+
+1. Ensure your docker-compose.yaml file is correctly configured for the cloud environment.
+2. Use the appropriate CLI commands or cloud console to deploy your container.
+3. Verify that the API is running correctly and that it can access the necessary GPU resources.
+
 ## Future plans
 
 Optimization related:
